@@ -1640,6 +1640,81 @@ async def test_view_spend_logs_summarize_parameter(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_ui_view_spend_logs_with_request_ids(client, monkeypatch):
+    """Test the /spend/logs/v2 endpoint with multiple request_ids filter"""
+    mock_spend_logs = [
+        {
+            "id": "log1",
+            "request_id": "req1",
+            "spend": 0.05,
+            "startTime": datetime.datetime.now(timezone.utc).isoformat(),
+        },
+        {
+            "id": "log2",
+            "request_id": "req2",
+            "spend": 0.10,
+            "startTime": datetime.datetime.now(timezone.utc).isoformat(),
+        },
+        {
+            "id": "log3",
+            "request_id": "req3",
+            "spend": 0.15,
+            "startTime": datetime.datetime.now(timezone.utc).isoformat(),
+        },
+    ]
+
+    class MockDB:
+        async def find_many(self, *args, **kwargs):
+            where = kwargs.get("where", {})
+            if "request_id" in where:
+                req_filter = where["request_id"]
+                # Handle "in" clause for multiple IDs
+                if isinstance(req_filter, dict) and "in" in req_filter:
+                    return [log for log in mock_spend_logs if log["request_id"] in req_filter["in"]]
+            return mock_spend_logs
+
+        async def count(self, *args, **kwargs):
+            where = kwargs.get("where", {})
+            if "request_id" in where and isinstance(where["request_id"], dict):
+                return len([log for log in mock_spend_logs if log["request_id"] in where["request_id"]["in"]])
+            return len(mock_spend_logs)
+
+    class MockPrismaClient:
+        def __init__(self):
+            self.db = MockDB()
+            self.db.litellm_spendlogs = self.db
+
+    monkeypatch.setattr("litellm.proxy.proxy_server.prisma_client", MockPrismaClient())
+
+    start_date = (datetime.datetime.now(timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+    end_date = datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+    response = client.get(
+        "/spend/logs/v2",
+        params={
+            "request_ids": "req1,req2",
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+        headers={"Authorization": "Bearer sk-test"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # Verify pagination fields are present
+    assert "data" in data
+    assert "total" in data
+    assert "page" in data
+
+    # Verify only req1 and req2 are returned
+    assert data["total"] == 2
+    assert len(data["data"]) == 2
+    returned_ids = {log["request_id"] for log in data["data"]}
+    assert returned_ids == {"req1", "req2"}
+
+
+@pytest.mark.asyncio
 async def test_view_spend_tags(client, monkeypatch):
     """Test the /spend/tags endpoint"""
 
