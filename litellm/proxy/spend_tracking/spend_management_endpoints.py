@@ -1639,6 +1639,10 @@ async def ui_view_spend_logs(  # noqa: PLR0915
         default=None,
         description="request_id to get spend logs for specific request_id",
     ),
+    request_ids: Optional[str] = fastapi.Query(
+        default=None,
+        description="Comma-separated request IDs (max 10000) to filter logs",
+    ),
     team_id: Optional[str] = fastapi.Query(
         default=None,
         description="Filter spend logs by team_id",
@@ -1723,7 +1727,11 @@ async def ui_view_spend_logs(  # noqa: PLR0915
                     return datetime.strptime(date_str, fmt).replace(tzinfo=timezone.utc)
                 except ValueError:
                     continue
-            expected = "'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'" if is_v2 else "'YYYY-MM-DD HH:MM:SS'"
+            expected = (
+                "'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS'"
+                if is_v2
+                else "'YYYY-MM-DD HH:MM:SS'"
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid date format: {date_str}. Expected: {expected}",
@@ -1756,6 +1764,13 @@ async def ui_view_spend_logs(  # noqa: PLR0915
 
         if request_id is not None:
             where_conditions["request_id"] = request_id
+        elif request_ids is not None:
+            # Handle multiple request IDs (comma-separated), cap at 10000
+            id_list = [rid.strip() for rid in request_ids.split(",") if rid.strip()][
+                :10000
+            ]
+            if id_list:
+                where_conditions["request_id"] = {"in": id_list}
 
         if model is not None:
             where_conditions["model"] = model
@@ -3141,7 +3156,11 @@ def _can_user_view_spend_log(user_api_key_dict: UserAPIKeyAuth) -> bool:
     """
     user_role = user_api_key_dict.user_role
     user_id = user_api_key_dict.user_id
-    return user_role in (
-        LitellmUserRoles.INTERNAL_USER,
-        LitellmUserRoles.INTERNAL_USER_VIEW_ONLY,
-    ) and user_id is not None
+    return (
+        user_role
+        in (
+            LitellmUserRoles.INTERNAL_USER,
+            LitellmUserRoles.INTERNAL_USER_VIEW_ONLY,
+        )
+        and user_id is not None
+    )
