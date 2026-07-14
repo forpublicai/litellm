@@ -1835,9 +1835,7 @@ async def ui_view_spend_logs(
             where_conditions["request_id"] = request_id
         elif request_ids is not None:
             # Handle multiple request IDs (comma-separated), cap at 10000
-            id_list = [rid.strip() for rid in request_ids.split(",") if rid.strip()][
-                :10000
-            ]
+            id_list = [rid.strip() for rid in request_ids.split(",") if rid.strip()][:10000]
             if id_list:
                 where_conditions["request_id"] = {"in": id_list}
 
@@ -1962,10 +1960,15 @@ async def ui_view_spend_logs(
             ("end_user", "end_user"),
         ]:
             val = where_conditions.get(wc_key)
-            if val is not None and isinstance(val, str):
-                sql_conditions.append(f"{sql_col} = ${p}")
-                sql_params.append(val)
-                p += 1
+            if val is not None:
+                if isinstance(val, str):
+                    sql_conditions.append(f"{sql_col} = ${p}")
+                    sql_params.append(val)
+                    p += 1
+                elif isinstance(val, dict) and "in" in val:
+                    sql_conditions.append(f"{sql_col} = ANY(${p}::text[])")
+                    sql_params.append(val["in"])
+                    p += 1
 
         # Multi-team OR filter: (user = $X OR team_id = ANY($Y))
         if permitted_team_ids is not None and len(permitted_team_ids) > 0:
