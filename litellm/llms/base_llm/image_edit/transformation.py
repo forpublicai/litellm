@@ -67,6 +67,8 @@ class BaseImageEditConfig(ABC):
         headers: dict,
         model: str,
         api_key: Optional[str] = None,
+        litellm_params: Optional[dict] = None,
+        api_base: Optional[str] = None,
     ) -> dict:
         return {}
 
@@ -93,12 +95,22 @@ class BaseImageEditConfig(ABC):
         self,
         model: str,
         prompt: Optional[str],
-        image: FileTypes,
+        image: Optional[FileTypes],
         image_edit_optional_request_params: Dict,
         litellm_params: GenericLiteLLMParams,
         headers: dict,
     ) -> Tuple[Dict, RequestFiles]:
         pass
+
+    def finalize_image_edit_request_data(self, data: dict, resolved_request_url: str) -> dict:
+        """
+        Last pass on the request dict after ``transform_image_edit_request``, using the
+        exact URL string used for the HTTP POST (same as ``get_complete_url`` output).
+
+        The handler sends this dict as ``data=`` for multipart providers or ``json=``
+        for JSON-only providers; default implementation returns ``data`` unchanged.
+        """
+        return data
 
     @abstractmethod
     def transform_image_edit_response(

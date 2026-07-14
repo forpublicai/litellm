@@ -1,7 +1,7 @@
 import useAuthorized from "@/app/(dashboard)/hooks/useAuthorized";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { createQueryKeys } from "../common/queryKeysFactory";
-import { proxyBaseUrl } from "@/components/networking";
+import { proxyBaseUrl, getGlobalLitellmHeaderName } from "@/components/networking";
 
 export interface RouterSettingsField {
   field_name: string;
@@ -34,12 +34,10 @@ const getRouterFields = async (accessToken: string): Promise<RouterFieldsRespons
   try {
     const url = proxyBaseUrl ? `${proxyBaseUrl}/router/fields` : `/router/fields`;
 
-    console.log("Fetching router fields from:", url);
-
     const response = await fetch(url, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        [getGlobalLitellmHeaderName()]: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
     });
@@ -51,7 +49,6 @@ const getRouterFields = async (accessToken: string): Promise<RouterFieldsRespons
     }
 
     const data: RouterFieldsResponse = await response.json();
-    console.log("Fetched router fields:", data);
     return data;
   } catch (error) {
     console.error("Failed to fetch router fields:", error);

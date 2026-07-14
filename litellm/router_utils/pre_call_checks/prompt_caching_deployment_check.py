@@ -49,9 +49,7 @@ class PromptCachingDeploymentCheck(CustomLogger):
         return healthy_deployments
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
-        standard_logging_object: Optional[StandardLoggingPayload] = kwargs.get(
-            "standard_logging_object", None
-        )
+        standard_logging_object: Optional[StandardLoggingPayload] = kwargs.get("standard_logging_object", None)
 
         if standard_logging_object is None:
             return
@@ -61,9 +59,10 @@ class PromptCachingDeploymentCheck(CustomLogger):
         if (
             call_type != CallTypes.completion.value
             and call_type != CallTypes.acompletion.value
+            and call_type != CallTypes.anthropic_messages.value
         ):  # only use prompt caching for completion calls
             verbose_logger.debug(
-                "litellm.router_utils.pre_call_checks.prompt_caching_deployment_check: skipping adding model id to prompt caching cache, CALL TYPE IS NOT COMPLETION"
+                "litellm.router_utils.pre_call_checks.prompt_caching_deployment_check: skipping adding model id to prompt caching cache, CALL TYPE IS NOT COMPLETION or ANTHROPIC MESSAGE"
             )
             return
 

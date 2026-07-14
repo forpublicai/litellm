@@ -478,19 +478,20 @@ async def test_anthropic_endpoint_error_handling():
 @pytest.mark.asyncio
 async def test_factory_anthropic_endpoint_calls_anthropic_counter():
     """Test that /v1/messages/count_tokens with Anthropic model uses Anthropic counter."""
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import patch, AsyncMock, MagicMock
     from fastapi.testclient import TestClient
     from litellm.proxy.proxy_server import app
 
-    # Mock the anthropic token counting function
-    with patch(
-        "litellm.proxy.utils.count_tokens_with_anthropic_api"
-    ) as mock_anthropic_count:
-        mock_anthropic_count.return_value = {
-            "total_tokens": 42,
-            "tokenizer_used": "anthropic",
-        }
+    # Mock the global handler instance in token_counter module
+    mock_handler = MagicMock()
+    mock_handler.handle_count_tokens_request = AsyncMock(
+        return_value={"input_tokens": 42}
+    )
 
+    with patch(
+        "litellm.llms.anthropic.count_tokens.token_counter.anthropic_count_tokens_handler",
+        mock_handler,
+    ):
         # Mock router to return Anthropic deployment
         with patch("litellm.proxy.proxy_server.llm_router") as mock_router:
             mock_router.model_list = [
@@ -510,36 +511,44 @@ async def test_factory_anthropic_endpoint_calls_anthropic_counter():
                 }
             )
 
-            client = TestClient(app)
+            # Set ANTHROPIC_API_KEY for the test
+            with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
+                client = TestClient(app)
 
-            response = client.post(
-                "/v1/messages/count_tokens",
-                json={
-                    "model": "claude-3-5-sonnet",
-                    "messages": [{"role": "user", "content": "Hello"}],
-                },
-                headers={"Authorization": "Bearer test-key"},
-            )
+                response = client.post(
+                    "/v1/messages/count_tokens",
+                    json={
+                        "model": "claude-3-5-sonnet",
+                        "messages": [{"role": "user", "content": "Hello"}],
+                    },
+                    headers={"Authorization": "Bearer test-key"},
+                )
 
-            assert response.status_code == 200
-            data = response.json()
-            assert data["input_tokens"] == 42
+                assert response.status_code == 200
+                data = response.json()
+                assert data["input_tokens"] == 42
 
-            # Verify that Anthropic API was called
-            mock_anthropic_count.assert_called_once()
+                # Verify that Anthropic handler was called
+                mock_handler.handle_count_tokens_request.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_factory_gpt4_endpoint_does_not_call_anthropic_counter():
     """Test that /v1/messages/count_tokens with GPT-4 does NOT use Anthropic counter."""
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import patch, AsyncMock, MagicMock
     from fastapi.testclient import TestClient
     from litellm.proxy.proxy_server import app
 
-    # Mock the anthropic token counting function
+    # Mock the global handler instance in token_counter module
+    mock_handler = MagicMock()
+    mock_handler.handle_count_tokens_request = AsyncMock(
+        return_value={"input_tokens": 42}
+    )
+
     with patch(
-        "litellm.proxy.utils.count_tokens_with_anthropic_api"
-    ) as mock_anthropic_count:
+        "litellm.llms.anthropic.count_tokens.token_counter.anthropic_count_tokens_handler",
+        mock_handler,
+    ):
         # Mock litellm token counter
         with patch("litellm.token_counter") as mock_litellm_counter:
             mock_litellm_counter.return_value = 50
@@ -578,21 +587,27 @@ async def test_factory_gpt4_endpoint_does_not_call_anthropic_counter():
                 data = response.json()
                 assert data["input_tokens"] == 50
 
-                # Verify that Anthropic API was NOT called
-                mock_anthropic_count.assert_not_called()
+                # Verify that Anthropic handler was NOT called
+                mock_handler.handle_count_tokens_request.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_factory_normal_token_counter_endpoint_does_not_call_anthropic():
     """Test that /utils/token_counter does NOT use Anthropic counter even with Anthropic model."""
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import patch, AsyncMock, MagicMock
     from fastapi.testclient import TestClient
     from litellm.proxy.proxy_server import app
 
-    # Mock the anthropic token counting function
+    # Mock the global handler instance in token_counter module
+    mock_handler = MagicMock()
+    mock_handler.handle_count_tokens_request = AsyncMock(
+        return_value={"input_tokens": 42}
+    )
+
     with patch(
-        "litellm.proxy.utils.count_tokens_with_anthropic_api"
-    ) as mock_anthropic_count:
+        "litellm.llms.anthropic.count_tokens.token_counter.anthropic_count_tokens_handler",
+        mock_handler,
+    ):
         # Mock litellm token counter
         with patch("litellm.token_counter") as mock_litellm_counter:
             mock_litellm_counter.return_value = 35
@@ -635,8 +650,8 @@ async def test_factory_normal_token_counter_endpoint_does_not_call_anthropic():
                 data = response.json()
                 assert data["total_tokens"] == 35
 
-                # Verify that Anthropic API was NOT called (since call_endpoint=False)
-                mock_anthropic_count.assert_not_called()
+                # Verify that Anthropic handler was NOT called (since call_endpoint=False)
+                mock_handler.handle_count_tokens_request.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -667,6 +682,9 @@ async def test_factory_registration():
     assert not counter.should_use_token_counting_api(custom_llm_provider=None)
 
 
+@pytest.mark.skip(
+    reason="Requires Google/Vertex AI credentials (GEMINI_API_KEY or VERTEX_AI_PRIVATE_KEY)."
+)
 @pytest.mark.asyncio
 @pytest.mark.parametrize("model_name", ["gemini-2.5-pro", "vertex-ai-gemini-2.5-pro"])
 async def test_vertex_ai_gemini_token_counting_with_contents(model_name):
@@ -832,6 +850,7 @@ async def test_vertex_ai_anthropic_token_counting():
         assert "input_tokens" in response.original_response
         assert response.original_response["input_tokens"] == 15
 
+
 @pytest.mark.parametrize("vertex_location", ["global", "us-central1"])
 def test_vertex_ai_partner_models_token_counting_endpoint(vertex_location):
     """
@@ -851,7 +870,9 @@ def test_vertex_ai_partner_models_token_counting_endpoint(vertex_location):
     if vertex_location == "global":
         assert endpoint.startswith("https://aiplatform.googleapis.com")
     else:
-        assert endpoint.startswith(f"https://{vertex_location}-aiplatform.googleapis.com")
+        assert endpoint.startswith(
+            f"https://{vertex_location}-aiplatform.googleapis.com"
+        )
 
 
 @pytest.mark.asyncio
@@ -872,9 +893,7 @@ async def test_bedrock_token_counter_error_propagation_bedrock_error():
         ) as MockHandler:
             mock_handler_instance = MockHandler.return_value
             mock_handler_instance.handle_count_tokens_request = AsyncMock(
-                side_effect=BedrockError(
-                    status_code=429, message="Rate limit exceeded"
-                )
+                side_effect=BedrockError(status_code=429, message="Rate limit exceeded")
             )
 
             result = await counter.count_tokens(
@@ -951,7 +970,9 @@ async def test_bedrock_handler_httpx_error_status_code_propagation():
                     "get_bedrock_count_tokens_endpoint",
                     return_value="https://example.com",
                 ):
-                    with patch.object(handler, "_sign_request", return_value=({}, "{}")):
+                    with patch.object(
+                        handler, "_sign_request", return_value=({}, "{}")
+                    ):
                         with patch(
                             "litellm.llms.bedrock.count_tokens.handler.get_async_httpx_client"
                         ) as mock_client:
@@ -973,7 +994,81 @@ async def test_bedrock_handler_httpx_error_status_code_propagation():
 
                             assert exc_info.value.status_code == 403
                             # Message should be the raw response text
-                            assert exc_info.value.message == "Forbidden - Invalid credentials"
+                            assert (
+                                exc_info.value.message
+                                == "Forbidden - Invalid credentials"
+                            )
+
+
+@pytest.mark.asyncio
+async def test_token_counter_httpx_status_error_raises_proxy_exception():
+    """
+    When provider_counter.count_tokens() raises httpx.HTTPStatusError,
+    the token_counter endpoint should catch it and raise a ProxyException
+    with the upstream status code and error message.
+    """
+
+    upstream_status = 429
+    upstream_message = "Rate limit exceeded"
+    response = httpx.Response(
+        status_code=upstream_status,
+        request=httpx.Request("POST", "https://provider.example.com/count"),
+    )
+    http_error = httpx.HTTPStatusError(
+        message=upstream_message,
+        request=response.request,
+        response=response,
+    )
+
+    mock_counter = MagicMock()
+    mock_counter.should_use_token_counting_api.return_value = True
+    mock_counter.count_tokens = AsyncMock(side_effect=http_error)
+
+    # Save originals
+    original_get_provider_token_counter = (
+        litellm.proxy.proxy_server._get_provider_token_counter
+    )
+    original_router = litellm.proxy.proxy_server.llm_router
+
+    try:
+
+        def mock_get_provider_token_counter(deployment, model_to_use):
+            return (mock_counter, "claude-4-6-sonnet", "vertex_ai")
+
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            mock_get_provider_token_counter
+        )
+
+        mock_router = MagicMock()
+        mock_router.async_get_available_deployment = AsyncMock(
+            return_value={
+                "litellm_params": {
+                    "model": "vertex_ai/claude-4-6-sonnet",
+                    "api_key": "fake-key",
+                },
+                "model_info": {},
+            }
+        )
+        litellm.proxy.proxy_server.llm_router = mock_router
+
+        with pytest.raises(ProxyException) as exc_info:
+            await token_counter(
+                request=TokenCountRequest(
+                    model="claude-4-6-sonnet",
+                    messages=[{"role": "user", "content": "hello"}],
+                ),
+                call_endpoint=True,
+            )
+
+        assert exc_info.value.code == str(upstream_status)
+        assert upstream_message in exc_info.value.message
+        assert exc_info.value.type == "token_counting_error"
+        assert exc_info.value.param == "model"
+    finally:
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            original_get_provider_token_counter
+        )
+        litellm.proxy.proxy_server.llm_router = original_router
 
 
 @pytest.mark.asyncio
@@ -1008,7 +1103,9 @@ async def test_proxy_token_counter_error_raises_exception_when_disabled():
 
     # Save original value and function
     original_disable = litellm.disable_token_counter
-    original_get_provider_token_counter = litellm.proxy.proxy_server._get_provider_token_counter
+    original_get_provider_token_counter = (
+        litellm.proxy.proxy_server._get_provider_token_counter
+    )
 
     try:
         litellm.disable_token_counter = True
@@ -1022,7 +1119,9 @@ async def test_proxy_token_counter_error_raises_exception_when_disabled():
         def mock_get_provider_token_counter(deployment, model_to_use):
             return (mock_counter, "anthropic.claude-3-sonnet", "bedrock")
 
-        litellm.proxy.proxy_server._get_provider_token_counter = mock_get_provider_token_counter
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            mock_get_provider_token_counter
+        )
 
         with pytest.raises(ProxyException) as exc_info:
             await token_counter(
@@ -1037,7 +1136,9 @@ async def test_proxy_token_counter_error_raises_exception_when_disabled():
         assert "Rate limit exceeded" in exc_info.value.message
     finally:
         litellm.disable_token_counter = original_disable
-        litellm.proxy.proxy_server._get_provider_token_counter = original_get_provider_token_counter
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            original_get_provider_token_counter
+        )
 
 
 @pytest.mark.asyncio
@@ -1072,7 +1173,9 @@ async def test_proxy_token_counter_error_falls_back_when_enabled():
 
     # Save original value and function
     original_disable = litellm.disable_token_counter
-    original_get_provider_token_counter = litellm.proxy.proxy_server._get_provider_token_counter
+    original_get_provider_token_counter = (
+        litellm.proxy.proxy_server._get_provider_token_counter
+    )
 
     try:
         litellm.disable_token_counter = False
@@ -1086,7 +1189,9 @@ async def test_proxy_token_counter_error_falls_back_when_enabled():
         def mock_get_provider_token_counter(deployment, model_to_use):
             return (mock_counter, "anthropic.claude-3-sonnet", "bedrock")
 
-        litellm.proxy.proxy_server._get_provider_token_counter = mock_get_provider_token_counter
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            mock_get_provider_token_counter
+        )
 
         # Should not raise, should fall back to local tokenizer
         result = await token_counter(
@@ -1103,7 +1208,9 @@ async def test_proxy_token_counter_error_falls_back_when_enabled():
         assert result.tokenizer_type != "bedrock_api"
     finally:
         litellm.disable_token_counter = original_disable
-        litellm.proxy.proxy_server._get_provider_token_counter = original_get_provider_token_counter
+        litellm.proxy.proxy_server._get_provider_token_counter = (
+            original_get_provider_token_counter
+        )
 
 
 @pytest.mark.asyncio
@@ -1257,5 +1364,3 @@ async def test_anthropic_endpoint_429_rate_limit_error_format():
     finally:
         anthropic_endpoints._read_request_body = original_read_request_body
         proxy_server.token_counter = original_token_counter
-
-

@@ -32,7 +32,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   description,
   children,
   serverName,
-  accessGroups = ["dev"],
+  accessGroups = ["dev-group"],
 }) => {
   const [useServerHeader, setUseServerHeader] = useState(false);
 
@@ -42,9 +42,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
     };
     if (useServerHeader && serverName) {
       const formattedServerName = serverName.replace(/\s+/g, "_");
-      // Include both server name and access groups in the same header
+      // Include both server name and access groups in the same header (comma-separated string)
       const serverAndGroups = [formattedServerName, ...accessGroups].join(",");
-      headers["x-mcp-servers"] = [serverAndGroups];
+      headers["x-mcp-servers"] = serverAndGroups;
     }
     return headers;
   };
@@ -77,13 +77,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
               description={
                 <div>
                   <p>
-                    <strong>Option 1:</strong> Get a specific server: <code>["{serverName.replace(/\s+/g, "_")}"]</code>
+                    <strong>Option 1:</strong> Get a specific server: <code>"{serverName.replace(/\s+/g, "_")}"</code>
                   </p>
                   <p>
-                    <strong>Option 2:</strong> Get a group of MCPs: <code>["dev-group"]</code>
+                    <strong>Option 2:</strong> Get a group of MCPs: <code>"dev-group"</code>
                   </p>
                   <p className="mt-2 text-sm text-gray-600">
-                    You can also mix both: <code>["Server1,dev-group"]</code>
+                    You can also mix both: <code>"Server1,dev-group"</code>
                   </p>
                 </div>
               }
@@ -144,8 +144,8 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
       // Format server names (replace spaces with underscores)
       const formattedServers = serverHeaders[type].map((s) => s.replace(/\s+/g, "_"));
 
-      // Use comma-separated format (can include both servers and access groups)
-      headers["x-mcp-servers"] = [formattedServers.join(",")];
+      // Use comma-separated string (can include both servers and access groups)
+      headers["x-mcp-servers"] = formattedServers.join(",");
     }
 
     return headers;
@@ -189,7 +189,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
     children: React.ReactNode;
   }> = ({ step, title, children }) => (
     <div className="flex gap-4">
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
           {step}
         </div>
@@ -205,7 +205,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
 
   const LiteLLMProxyTab = () => (
     <Space direction="vertical" size="large" className="w-full">
-      <div className="bg-gradient-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
+      <div className="bg-linear-to-r from-emerald-50 to-green-50 p-6 rounded-lg border border-emerald-100">
         <div className="flex items-center gap-3 mb-3">
           <Zap className="text-emerald-600" size={24} />
           <Title level={4} className="mb-0 text-emerald-900">
@@ -244,7 +244,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
           title="Implementation Example"
           description="Complete cURL example for using the LiteLLM Proxy Responses API"
           serverName={currentServer}
-          accessGroups={["dev"]}
+          accessGroups={["dev-group"]}
         >
           <CodeBlock
             code={`curl --location '${proxyBaseUrl}/v1/responses' \\
@@ -256,11 +256,11 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
         {
             "type": "mcp",
             "server_label": "litellm",
-            "server_url": "${proxyBaseUrl}/mcp",
+            "server_url": "litellm_proxy",
             "require_approval": "never",
             "headers": {
                 "x-litellm-api-key": "Bearer YOUR_LITELLM_VIRTUAL_KEY",
-                "x-mcp-servers": ["Zapier_MCP,dev"]
+                "x-mcp-servers": "Zapier_MCP,dev-group"
             }
         }
     ],
@@ -277,7 +277,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
 
   const OpenAITab = () => (
     <Space direction="vertical" size="large" className="w-full">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+      <div className="bg-linear-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
         <div className="flex items-center gap-3 mb-3">
           <Code className="text-blue-600" size={24} />
           <Title level={4} className="mb-0 text-blue-900">
@@ -327,7 +327,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
           title="Implementation Example"
           description="Complete cURL example for using the Responses API"
           serverName="Zapier Gmail"
-          accessGroups={["dev"]}
+          accessGroups={["dev-group"]}
         >
           <CodeBlock
             code={`curl --location 'https://api.openai.com/v1/responses' \\
@@ -343,7 +343,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
             "require_approval": "never",
             "headers": {
                 "x-litellm-api-key": "Bearer YOUR_LITELLM_API_KEY",
-                "x-mcp-servers": ["Zapier_MCP,dev"]
+                "x-mcp-servers": "Zapier_MCP,dev-group"
             }
         }
     ],
@@ -360,7 +360,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
 
   const CursorTab = () => (
     <Space direction="vertical" size="large" className="w-full">
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-100">
+      <div className="bg-linear-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-100">
         <div className="flex items-center gap-3 mb-3">
           <Terminal className="text-purple-600" size={24} />
           <Title level={4} className="mb-0 text-purple-900">
@@ -380,8 +380,8 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
         <Space direction="vertical" size="large" className="w-full">
           <StepCard step={1} title="Open Cursor Settings">
             <Text className="text-gray-600">
-              Use the keyboard shortcut <code className="bg-gray-100 px-2 py-1 rounded">⇧+⌘+J</code> (Mac) or{" "}
-              <code className="bg-gray-100 px-2 py-1 rounded">Ctrl+Shift+J</code> (Windows/Linux)
+              Use the keyboard shortcut <code className="bg-gray-100 px-2 py-1 rounded-sm">⇧+⌘+J</code> (Mac) or{" "}
+              <code className="bg-gray-100 px-2 py-1 rounded-sm">Ctrl+Shift+J</code> (Windows/Linux)
             </Text>
           </StepCard>
 
@@ -392,15 +392,15 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
           <StepCard step={3} title="Add Configuration">
             <Text className="text-gray-600 mb-3">
               Copy the JSON configuration below and paste it into Cursor, then save with{" "}
-              <code className="bg-gray-100 px-2 py-1 rounded">Cmd+S</code> or{" "}
-              <code className="bg-gray-100 px-2 py-1 rounded">Ctrl+S</code>
+              <code className="bg-gray-100 px-2 py-1 rounded-sm">Cmd+S</code> or{" "}
+              <code className="bg-gray-100 px-2 py-1 rounded-sm">Ctrl+S</code>
             </Text>
             <FeatureCard
               icon={<Code className="text-purple-600" size={16} />}
               title="Configuration"
               description="Cursor MCP configuration"
               serverName="Zapier Gmail"
-              accessGroups={["dev"]}
+              accessGroups={["dev-group"]}
             >
               <CodeBlock
                 code={`{
@@ -409,7 +409,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
       "url": "${proxyBaseUrl}/mcp",
       "headers": {
         "x-litellm-api-key": "Bearer YOUR_LITELLM_API_KEY",
-        "x-mcp-servers": ["Zapier_MCP,dev"]
+        "x-mcp-servers": "Zapier_MCP,dev-group"
       }
     }
   }
@@ -426,7 +426,7 @@ const MCPConnect: React.FC<MCPConnectProps> = ({ currentServerAccessGroups = [] 
 
   const StreamableHTTPTab = () => (
     <Space direction="vertical" size="large" className="w-full">
-      <div className="bg-gradient-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
+      <div className="bg-linear-to-r from-green-50 to-teal-50 p-6 rounded-lg border border-green-100">
         <div className="flex items-center gap-3 mb-3">
           <Globe className="text-green-600" size={24} />
           <Title level={4} className="mb-0 text-green-900">

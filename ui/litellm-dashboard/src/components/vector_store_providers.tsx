@@ -1,7 +1,11 @@
+import { resolveLogoSrc } from "@/lib/assetPaths";
+
 export enum VectorStoreProviders {
   Bedrock = "Amazon Bedrock",
+  S3Vectors = "Amazon S3 Vectors",
   PgVector = "PostgreSQL pgvector (LiteLLM Connector)",
   VertexRagEngine = "Vertex AI RAG Engine",
+  VertexAiSearch = "Vertex AI Search",
   OpenAI = "OpenAI",
   Azure = "Azure OpenAI",
   Milvus = "Milvus",
@@ -11,20 +15,24 @@ export const vectorStoreProviderMap: Record<string, string> = {
   Bedrock: "bedrock",
   PgVector: "pg_vector",
   VertexRagEngine: "vertex_ai",
+  VertexAiSearch: "vertex_ai/search_api",
   OpenAI: "openai",
   Azure: "azure",
   Milvus: "milvus",
+  S3Vectors: "s3_vectors",
 };
 
-const asset_logos_folder = "../ui/assets/logos/";
+const asset_logos_folder = "/ui/assets/logos/";
 
 export const vectorStoreProviderLogoMap: Record<string, string> = {
   [VectorStoreProviders.Bedrock]: `${asset_logos_folder}bedrock.svg`,
   [VectorStoreProviders.PgVector]: `${asset_logos_folder}postgresql.svg`, // Fallback to a generic database icon if needed
   [VectorStoreProviders.VertexRagEngine]: `${asset_logos_folder}google.svg`,
+  [VectorStoreProviders.VertexAiSearch]: `${asset_logos_folder}google.svg`,
   [VectorStoreProviders.OpenAI]: `${asset_logos_folder}openai_small.svg`,
   [VectorStoreProviders.Azure]: `${asset_logos_folder}microsoft_azure.svg`,
   [VectorStoreProviders.Milvus]: `${asset_logos_folder}milvus.svg`,
+  [VectorStoreProviders.S3Vectors]: `${asset_logos_folder}s3_vector.png`,
 };
 
 // Define field types for provider-specific configurations
@@ -35,6 +43,8 @@ export interface VectorStoreFieldConfig {
   placeholder?: string;
   required: boolean;
   type?: "text" | "password" | "select";
+  options?: { value: string; label: string }[];
+  initialValue?: string;
 }
 
 // Provider-specific field configurations
@@ -59,6 +69,46 @@ export const vectorStoreProviderFields: Record<string, VectorStoreFieldConfig[]>
     },
   ],
   vertex_rag_engine: [],
+  "vertex_ai/search_api": [
+    {
+      name: "vertex_project",
+      label: "Vertex Project",
+      tooltip: "Google Cloud project ID that hosts the Vertex AI Search data store.",
+      placeholder: "my-gcp-project-id",
+      required: true,
+      type: "text",
+    },
+    {
+      name: "vertex_location",
+      label: "Vertex Location",
+      tooltip: "Vertex AI Search data store location. Must be one of global, us, or eu.",
+      required: true,
+      type: "select",
+      options: [
+        { value: "global", label: "global" },
+        { value: "us", label: "us" },
+        { value: "eu", label: "eu" },
+      ],
+      initialValue: "global",
+    },
+    {
+      name: "vertex_collection_id",
+      label: "Collection ID (optional)",
+      tooltip: "Discovery Engine collection ID. Leave blank to use the default collection.",
+      placeholder: "e.g. my-custom-collection",
+      required: false,
+      type: "text",
+    },
+    {
+      name: "vertex_engine_id",
+      label: "Engine ID (optional)",
+      tooltip:
+        "Search app (engine) ID. Required for website, healthcare, and connector-based data stores (Workspace, Slack, Jira, etc.) because these sources route search through an engine. Leave blank to query the data store directly.",
+      placeholder: "e.g. my-search-app_1234567890",
+      required: false,
+      type: "text",
+    },
+  ],
   openai: [
     {
       name: "api_key",
@@ -114,6 +164,40 @@ export const vectorStoreProviderFields: Record<string, VectorStoreFieldConfig[]>
       type: "select",
     },
   ],
+  s3_vectors: [
+    {
+      name: "vector_bucket_name",
+      label: "Vector Bucket Name",
+      tooltip: "S3 bucket name for vector storage (will be auto-created if it doesn't exist)",
+      placeholder: "my-vector-bucket",
+      required: true,
+      type: "text",
+    },
+    {
+      name: "index_name",
+      label: "Index Name",
+      tooltip: "Name for the vector index (optional, will be auto-generated if not provided)",
+      placeholder: "my-vector-index",
+      required: false,
+      type: "text",
+    },
+    {
+      name: "aws_region_name",
+      label: "AWS Region",
+      tooltip: "AWS region where the S3 bucket is located (e.g., us-west-2)",
+      placeholder: "us-west-2",
+      required: true,
+      type: "text",
+    },
+    {
+      name: "embedding_model",
+      label: "Embedding Model",
+      tooltip: "Select the embedding model to use for vector generation",
+      placeholder: "text-embedding-3-small",
+      required: true,
+      type: "select",
+    },
+  ],
 };
 
 export const getVectorStoreProviderLogoAndName = (providerValue: string): { logo: string; displayName: string } => {
@@ -132,7 +216,7 @@ export const getVectorStoreProviderLogoAndName = (providerValue: string): { logo
 
   // Get the display name from VectorStoreProviders enum and logo from map
   const displayName = VectorStoreProviders[enumKey as keyof typeof VectorStoreProviders];
-  const logo = vectorStoreProviderLogoMap[displayName as keyof typeof vectorStoreProviderLogoMap];
+  const logo = resolveLogoSrc(vectorStoreProviderLogoMap[displayName as keyof typeof vectorStoreProviderLogoMap]) ?? "";
 
   return { logo, displayName };
 };

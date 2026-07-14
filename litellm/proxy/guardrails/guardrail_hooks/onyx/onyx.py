@@ -8,10 +8,14 @@ import os
 import uuid
 from typing import TYPE_CHECKING, Any, Literal, Optional, Type
 
+import httpx
 from fastapi import HTTPException
 
 from litellm._logging import verbose_proxy_logger
-from litellm.integrations.custom_guardrail import CustomGuardrail
+from litellm.integrations.custom_guardrail import (
+    CustomGuardrail,
+    log_guardrail_information,
+)
 from litellm.litellm_core_utils.litellm_logging import Logging as LiteLLMLoggingObj
 from litellm.llms.custom_httpx.http_handler import (
     get_async_httpx_client,
@@ -25,10 +29,16 @@ if TYPE_CHECKING:
 
 class OnyxGuardrail(CustomGuardrail):
     def __init__(
-        self, api_base: Optional[str] = None, api_key: Optional[str] = None, **kwargs
+        self,
+        api_base: Optional[str] = None,
+        api_key: Optional[str] = None,
+        timeout: Optional[float] = 10.0,
+        **kwargs,
     ):
+        timeout = timeout or int(os.getenv("ONYX_TIMEOUT", 10.0))
         self.async_handler = get_async_httpx_client(
-            llm_provider=httpxSpecialProvider.GuardrailCallback
+            llm_provider=httpxSpecialProvider.GuardrailCallback,
+            params={"timeout": httpx.Timeout(timeout=timeout, connect=5.0)},
         )
         self.api_base = api_base or os.getenv(
             "ONYX_API_BASE",
@@ -67,15 +77,14 @@ class OnyxGuardrail(CustomGuardrail):
             detection_message = "Unknown violation"
             if "violated_rules" in result:
                 detection_message = ", ".join(result["violated_rules"])
-            verbose_proxy_logger.warning(
-                f"Request blocked by Onyx Guard. Violations: {detection_message}."
-            )
+            verbose_proxy_logger.warning(f"Request blocked by Onyx Guard. Violations: {detection_message}.")
             raise HTTPException(
                 status_code=400,
                 detail=f"Request blocked by Onyx Guard. Violations: {detection_message}.",
             )
         return result
 
+    @log_guardrail_information
     async def apply_guardrail(
         self,
         inputs: GenericGuardrailAPIInputs,
@@ -83,10 +92,7 @@ class OnyxGuardrail(CustomGuardrail):
         input_type: Literal["request", "response"],
         logging_obj: Optional["LiteLLMLoggingObj"] = None,
     ) -> GenericGuardrailAPIInputs:
-
-        conversation_id = (
-            logging_obj.litellm_call_id if logging_obj else str(uuid.uuid4())
-        )
+        conversation_id = logging_obj.litellm_call_id if logging_obj else str(uuid.uuid4())
 
         verbose_proxy_logger.info(
             "Running Onyx Guard apply_guardrail hook",

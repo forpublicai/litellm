@@ -121,11 +121,7 @@ const SSOModals: React.FC<SSOModalsProps> = ({
       if (isAddSSOModalVisible && accessToken) {
         try {
           const ssoData = await getSSOSettings(accessToken);
-          console.log("Raw SSO data received:", ssoData); // Debug log
           if (ssoData && ssoData.values) {
-            console.log("SSO values:", ssoData.values); // Debug log
-            console.log("user_email from API:", ssoData.values.user_email); // Debug log
-
             // Determine which SSO provider is configured
             let selectedProvider = null;
             if (ssoData.values.google_client_id) {
@@ -175,13 +171,10 @@ const SSOModals: React.FC<SSOModalsProps> = ({
               ...roleMappingFields,
             };
 
-            console.log("Setting form values:", formValues); // Debug log
-
             // Clear form first, then set values with a small delay to ensure proper initialization
             form.resetFields();
             setTimeout(() => {
               form.setFieldsValue(formValues);
-              console.log("Form values set, current form values:", form.getFieldsValue()); // Debug log
             }, 100);
           }
         } catch (error) {
@@ -323,7 +316,7 @@ const SSOModals: React.FC<SSOModalsProps> = ({
     <>
       <Modal
         title={ssoConfigured ? "Edit SSO Settings" : "Add SSO"}
-        visible={isAddSSOModalVisible}
+        open={isAddSSOModalVisible}
         width={800}
         footer={null}
         onOk={handleAddSSOOk}
@@ -517,7 +510,7 @@ const SSOModals: React.FC<SSOModalsProps> = ({
       {/* Clear Confirmation Modal */}
       <Modal
         title="Confirm Clear SSO Settings"
-        visible={isClearConfirmModalVisible}
+        open={isClearConfirmModalVisible}
         onOk={handleClearSSO}
         onCancel={() => setIsClearConfirmModalVisible(false)}
         okText="Yes, Clear"
@@ -536,7 +529,7 @@ const SSOModals: React.FC<SSOModalsProps> = ({
 
       <Modal
         title="SSO Setup Instructions"
-        visible={isInstructionsModalVisible}
+        open={isInstructionsModalVisible}
         width={800}
         footer={null}
         onOk={handleInstructionsOk}
