@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "The tag version you want to build"
+        description: "The tag version you want to build (leave empty to automatically use the latest stable tag)"
         required: false
-        default: "spend_logs_patch"
+        default: ""
 
 env:
   REGISTRY: ghcr.io
