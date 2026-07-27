@@ -14,9 +14,9 @@ name: Close Low-Quality PRs
 #   gh workflow run "Close Low-Quality PRs" -f close=false
 
 on:
-  schedule:
-    # Daily at 09:00 UTC. Pairs well with the stale-issue workflow at midnight.
-    - cron: "0 9 * * *"
+#  schedule:
+#    # Daily at 09:00 UTC. Pairs well with the stale-issue workflow at midnight.
+#    - cron: "0 9 * * *"
   workflow_dispatch:
     inputs:
       close:

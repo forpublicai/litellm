@@ -12,8 +12,8 @@ on:
       - uv.lock
       - ui/litellm-dashboard/package-lock.json
       - .github/workflows/image-scan.yml
-  schedule:
-    - cron: "41 6 * * *"
+#  schedule:
+#    - cron: "41 6 * * *"
   workflow_dispatch:
 
 permissions: {}

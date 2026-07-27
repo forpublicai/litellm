@@ -1,8 +1,8 @@
 name: Create Daily Staging Branch
 
 on:
-  schedule:
-    - cron: "0 0,12 * * *" # Runs every 12 hours at midnight and noon UTC
+#  schedule:
+#    - cron: "0 0,12 * * *" # Runs every 12 hours at midnight and noon UTC
   workflow_dispatch: # Allow manual trigger
 
 jobs:
