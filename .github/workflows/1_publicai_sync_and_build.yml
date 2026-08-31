@@ -118,17 +118,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Build and push helper base image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: - # read from stdin
+          stdin: |
+            FROM cgr.dev/chainguard/wolfi-base@sha256:42df77a9974d6ec8b17a5ee8bc23b532600a44d705acef2409e0933c1251b45f
+            RUN apk add --no-cache file make
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Build and push Database Docker image
         uses: docker/build-push-action@v5
@@ -137,8 +149,8 @@ jobs:
           file: ./docker/Dockerfile.database
           push: true
           build-args: |
-            LITELLM_BUILD_IMAGE=alpine:3.20
-            LITELLM_RUNTIME_IMAGE=alpine:3.20
+            LITELLM_BUILD_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
+            LITELLM_RUNTIME_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.docker-tag.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
