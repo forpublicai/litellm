@@ -124,14 +124,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Create temporary Dockerfile for helper base
+        run: |
+          cat <<EOF > Dockerfile.helper
+          FROM cgr.dev/chainguard/wolfi-base@sha256:42df77a9974d6ec8b17a5ee8bc23b532600a44d705acef2409e0933c1251b45f
+          RUN apk add --no-cache file make
+          EOF
+
       - name: Build and push helper base image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: - # read from stdin
-          stdin: |
-            FROM cgr.dev/chainguard/wolfi-base@sha256:42df77a9974d6ec8b17a5ee8bc23b532600a44d705acef2409e0933c1251b45f
-            RUN apk add --no-cache file make
+          file: ./Dockerfile.helper
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
