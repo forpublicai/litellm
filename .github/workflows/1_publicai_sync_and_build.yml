@@ -1,4 +1,4 @@
-name: Sync Upstream and Build
+name: 1 Public AI Sync Upstream and Build
 
 on:
   schedule:
@@ -136,6 +136,9 @@ jobs:
           context: .
           file: ./docker/Dockerfile.database
           push: true
+          build-args: |
+            LITELLM_BUILD_IMAGE=alpine:3.20
+            LITELLM_RUNTIME_IMAGE=alpine:3.20
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.docker-tag.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
