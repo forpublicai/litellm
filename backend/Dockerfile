@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 RUN HOME=/opt/prisma XDG_CACHE_HOME=/opt/prisma/.cache PRISMA_BINARY_CACHE_DIR=/opt/prisma/binaries \
     npm_config_cache=/root/.npm \
-    prisma generate --schema=./schema.prisma
+    python -m prisma generate --schema=./schema.prisma
 
 RUN sed -i 's/\r$//' docker/component_entrypoint.sh && chmod +x docker/component_entrypoint.sh
 

@@ -79,7 +79,7 @@ COPY migrations/run.py /app/run.py
 # (`prisma py fetch`) doesn't reliably trigger engine downloads.
 RUN HOME=/opt/prisma XDG_CACHE_HOME=/opt/prisma/.cache PRISMA_BINARY_CACHE_DIR=/opt/prisma/binaries \
     npm_config_cache=/root/.npm \
-    prisma generate --schema=./schema.prisma
+    python -m prisma generate --schema=./schema.prisma
 
 # ---------- Runtime ----------
 FROM $LITELLM_RUNTIME_IMAGE AS runtime
