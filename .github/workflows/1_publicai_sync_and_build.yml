@@ -127,9 +127,9 @@ jobs:
       - name: Create temporary Dockerfile for helper base
         run: |
           cat <<EOF > Dockerfile.helper
-          FROM cgr.dev/chainguard/wolfi-base@sha256:42df77a9974d6ec8b17a5ee8bc23b532600a44d705acef2409e0933c1251b45f
+          FROM cgr.dev/chainguard/wolfi-base:latest
           ENV UV_PYTHON_DOWNLOADS=never
-          RUN apk upgrade --no-cache && apk add --no-cache file make
+          RUN apk add --no-cache file make
           EOF
 
       - name: Build and push helper base image
@@ -138,6 +138,7 @@ jobs:
           context: .
           file: ./Dockerfile.helper
           platforms: linux/amd64,linux/arm64
+          pull: true
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
 
@@ -152,6 +153,7 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile.database
+          pull: true
           push: true
           build-args: |
             LITELLM_BUILD_IMAGE=${{ env.REGISTRY }}/${{ github.repository }}/local-base:latest
