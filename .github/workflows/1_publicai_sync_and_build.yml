@@ -128,6 +128,7 @@ jobs:
         run: |
           cat <<EOF > Dockerfile.helper
           FROM cgr.dev/chainguard/wolfi-base@sha256:42df77a9974d6ec8b17a5ee8bc23b532600a44d705acef2409e0933c1251b45f
+          ENV UV_PYTHON_DOWNLOADS=never
           RUN apk add --no-cache file make
           EOF
 
