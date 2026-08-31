@@ -1,56 +1,56 @@
 name: _Unit Test Base (Reusable)
 
 on:
-  workflow_call:
-    inputs:
-      test-path:
-        description: "Pytest path(s) to run"
-        required: true
-        type: string
-      workers:
-        description: "Number of pytest-xdist workers"
-        required: false
-        type: number
-        default: 2
-      reruns:
-        description: "Number of reruns for flaky tests"
-        required: false
-        type: number
-        default: 2
-      timeout-minutes:
-        description: >-
-          Timeout for the test step alone. Setup (checkout, dependency install,
-          Prisma client generation) gets its own allowance on top, so a slow
-          runner or a cold binary download can never cancel passing tests.
-        required: false
-        type: number
-        default: 20
-      job-timeout-minutes:
-        description: >-
-          Backstop for the whole job. Keep it >= `timeout-minutes` plus 35: 30 for
-          the per-step ceilings on the setup steps below, and 5 for the runner
-          overhead the job clock charges but no step owns (job init, step
-          transitions, post-job cleanup). That headroom is what makes the test
-          budget a floor rather than a hope, since setup cannot overrun into it
-          without failing its own step first. GitHub expressions have no
-          arithmetic, so the sum is passed in rather than computed.
-        required: false
-        type: number
-        default: 55
-      max-failures:
-        description: "Stop after this many failures"
-        required: false
-        type: number
-        default: 10
-      dist:
-        description: "pytest-xdist distribution mode (loadscope|load|worksteal|loadfile|no)"
-        required: false
-        type: string
-        default: "loadscope"
-      artifact-name:
-        description: "Unique name for the coverage artifact (must be unique per run)"
-        required: true
-        type: string
+  # workflow_call:
+  #   inputs:
+  #     test-path:
+  #       description: "Pytest path(s) to run"
+  #       required: true
+  #       type: string
+  #     workers:
+  #       description: "Number of pytest-xdist workers"
+  #       required: false
+  #       type: number
+  #       default: 2
+  #     reruns:
+  #       description: "Number of reruns for flaky tests"
+  #       required: false
+  #       type: number
+  #       default: 2
+  #     timeout-minutes:
+  #       description: >-
+  #         Timeout for the test step alone. Setup (checkout, dependency install,
+  #         Prisma client generation) gets its own allowance on top, so a slow
+  #         runner or a cold binary download can never cancel passing tests.
+  #       required: false
+  #       type: number
+  #       default: 20
+  #     job-timeout-minutes:
+  #       description: >-
+  #         Backstop for the whole job. Keep it >= `timeout-minutes` plus 35: 30 for
+  #         the per-step ceilings on the setup steps below, and 5 for the runner
+  #         overhead the job clock charges but no step owns (job init, step
+  #         transitions, post-job cleanup). That headroom is what makes the test
+  #         budget a floor rather than a hope, since setup cannot overrun into it
+  #         without failing its own step first. GitHub expressions have no
+  #         arithmetic, so the sum is passed in rather than computed.
+  #       required: false
+  #       type: number
+  #       default: 55
+  #     max-failures:
+  #       description: "Stop after this many failures"
+  #       required: false
+  #       type: number
+  #       default: 10
+  #     dist:
+  #       description: "pytest-xdist distribution mode (loadscope|load|worksteal|loadfile|no)"
+  #       required: false
+  #       type: string
+  #       default: "loadscope"
+  #     artifact-name:
+  #       description: "Unique name for the coverage artifact (must be unique per run)"
+  #       required: true
+  #       type: string
 
 permissions:
   contents: read

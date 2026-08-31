@@ -8,9 +8,9 @@ name: Publish basedpyright base counts
 # every sha's artifact matters (any of them can become a merge-base).
 
 on:
-  push:
-    branches:
-      - litellm_internal_staging
+  # push:
+  #   branches:
+  #     - litellm_internal_staging
   workflow_dispatch:
     inputs:
       ref:

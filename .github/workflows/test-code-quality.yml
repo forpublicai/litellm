@@ -7,10 +7,10 @@ on:
       - litellm_internal_staging
       - litellm_oss_staging
       - "litellm_**"
-  push:
-    branches:
-      - main
-      - litellm_internal_staging
+  # push:
+  #   branches:
+  #     - main
+  #     - litellm_internal_staging
 
 permissions:
   contents: read

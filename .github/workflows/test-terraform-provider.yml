@@ -1,10 +1,10 @@
 name: Terraform Provider
 
 on:
-  push:
-    paths:
-      - "terraform/provider/**"
-      - ".github/workflows/test-terraform-provider.yml"
+  # push:
+  #   paths:
+  #     - "terraform/provider/**"
+  #     - ".github/workflows/test-terraform-provider.yml"
   pull_request:
     branches:
       - main

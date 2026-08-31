@@ -1,9 +1,9 @@
 name: Issue Keyword Labeler
 
 on:
-  issues:
-    types:
-      - opened
+  # issues:
+  #   types:
+  #     - opened
 
 jobs:
   scan-and-label:

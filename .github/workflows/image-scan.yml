@@ -1,27 +1,27 @@
 name: Image Scan
 
 on:
-  pull_request:
-    branches:
-      - main
-      - litellm_internal_staging
-      - litellm_oss_branch
-      - "litellm_**"
-    paths:
-      - Dockerfile
-      - docker/Dockerfile.non_root
-      - migrations/Dockerfile
-      - migrations/run.py
-      - gateway/Dockerfile
-      - gateway/main.py
-      - backend/Dockerfile
-      - backend/main.py
-      - docker/component_entrypoint.sh
-      - litellm-proxy-extras/**
-      - tests/proxy_migration_tests/**
-      - uv.lock
-      - ui/litellm-dashboard/package-lock.json
-      - .github/workflows/image-scan.yml
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - litellm_internal_staging
+  #     - litellm_oss_branch
+  #     - "litellm_**"
+  #   paths:
+  #     - Dockerfile
+  #     - docker/Dockerfile.non_root
+  #     - migrations/Dockerfile
+  #     - migrations/run.py
+  #     - gateway/Dockerfile
+  #     - gateway/main.py
+  #     - backend/Dockerfile
+  #     - backend/main.py
+  #     - docker/component_entrypoint.sh
+  #     - litellm-proxy-extras/**
+  #     - tests/proxy_migration_tests/**
+  #     - uv.lock
+  #     - ui/litellm-dashboard/package-lock.json
+  #     - .github/workflows/image-scan.yml
 #  schedule:
 #    - cron: "41 6 * * *"
   workflow_dispatch:

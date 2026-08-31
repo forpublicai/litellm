@@ -8,8 +8,8 @@ name: Conventional PR Title
 # See https://www.conventionalcommits.org/en/v1.0.0/
 
 on:
-  pull_request:
-    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+  # pull_request:
+  #   types: [opened, edited, reopened, synchronize, labeled, unlabeled]
 
 permissions:
   pull-requests: read

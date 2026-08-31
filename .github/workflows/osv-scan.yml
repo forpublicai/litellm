@@ -1,12 +1,12 @@
 name: OSV Scan
 
 on:
-  pull_request:
-    branches:
-      - main
-      - litellm_internal_staging
-      - litellm_oss_staging
-      - "litellm_**"
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - litellm_internal_staging
+  #     - litellm_oss_staging
+  #     - "litellm_**"
 #  schedule:
 #    - cron: "23 6 * * *"
   workflow_dispatch:

@@ -1,10 +1,10 @@
 name: LiteLLM Rust
 
 on:
-  push:
-    paths:
-      - "litellm-rust/**"
-      - ".github/workflows/test-rust.yml"
+  # push:
+  #   paths:
+  #     - "litellm-rust/**"
+  #     - ".github/workflows/test-rust.yml"
   pull_request:
     branches:
       - main

@@ -19,14 +19,14 @@ name: Agent Shin — rollout heads-up (one-shot)
 # on a manual dispatch with `dry_run=false`.
 
 on:
-  push:
-    branches:
-      - litellm_internal_staging
-    paths:
-      # The presence of this script on staging IS the rollout merge marker.
-      # Editing the file later would re-fire the workflow; that's safe because
-      # the script skips PRs/issues that already have the heads-up marker.
-      - ".github/scripts/triage_rollout_heads_up.py"
+  # push:
+  #   branches:
+  #     - litellm_internal_staging
+  #   paths:
+  #     # The presence of this script on staging IS the rollout merge marker.
+  #     # Editing the file later would re-fire the workflow; that's safe because
+  #     # the script skips PRs/issues that already have the heads-up marker.
+  #     - ".github/scripts/triage_rollout_heads_up.py"
   workflow_dispatch:
     inputs:
       dry_run:
