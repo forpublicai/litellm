@@ -49,7 +49,7 @@ RUN uv venv --python python && \
 
 RUN HOME=/opt/prisma XDG_CACHE_HOME=/opt/prisma/.cache PRISMA_BINARY_CACHE_DIR=/opt/prisma/binaries \
     npm_config_cache=/root/.npm \
-    python -m prisma generate --schema=./schema.prisma && \
+    prisma generate --schema=./schema.prisma && \
     chmod -R a+rX /opt/prisma && \
     python -c "import sys; from prisma.client import BINARY_PATHS; bad = sorted(p for group in BINARY_PATHS.model_dump().values() for p in group.values() if not p.startswith('/opt/prisma/')); sys.exit('prisma engines baked outside /opt/prisma: %r' % bad) if bad else None"
 
