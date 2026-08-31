@@ -1,8 +1,8 @@
 name: Create Daily OSS Branch
 
 on:
-  schedule:
-    - cron: "0 16 * * 1-5" # 9am PT during daylight saving time, weekdays.
+#  schedule:
+#    - cron: "0 16 * * 1-5" # 9am PT during daylight saving time, weekdays.
   workflow_dispatch:
     inputs:
       date:

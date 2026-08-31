@@ -1,8 +1,8 @@
 name: Updates model_prices_and_context_window.json and Create Pull Request
 
 on:
-  schedule:
-    - cron: "0 0 * * 0" # Run every Sundays at midnight
+#  schedule:
+#    - cron: "0 0 * * 0" # Run every Sundays at midnight
     #- cron: "0 0 * * *" # Run daily at midnight
 
 permissions:
