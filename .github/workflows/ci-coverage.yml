@@ -1,12 +1,12 @@
 name: "CI Coverage"
 
 on:
-  pull_request:
-    branches:
-      - main
-      - litellm_internal_staging
-      - litellm_oss_staging
-      - "litellm_**"
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - litellm_internal_staging
+  #     - litellm_oss_staging
+  #     - "litellm_**"
   push:
     branches:
       - main
